@@ -84,6 +84,14 @@ fun readCurrentPlantUML4EVersionFromPom(): String {
     return plantUml4EVersion ?: "unknown"
 }
 
+fun copyFile(sourceFile : String, destinationDirectoryPath : String, fileName : String) {
+    val destinationFile = File(destinationDirectoryPath, fileName)
+
+    createDirs(destinationFile.parentFile)
+
+    ant.invokeMethod("copy", mapOf("file" to sourceFile, "tofile" to destinationFile))
+}
+
 fun downloadFile(sourceFileUrl : String, destinationDirectoryPath : String) {
     val uri = URI(sourceFileUrl)
     val fileName = Path(uri.path).name
@@ -176,6 +184,7 @@ val plantUmlLibReleaseVersion: String = if (project.hasProperty("plantUmlVersion
     readLatestPlantUmlLibReleaseVersion()
 }
 val plantUmlLibReleaseVersionSimple = plantUmlLibReleaseVersion.removePrefix("v")
+val plantUmlCustomVersion = project.property("customVersion") as String
 
 val plantUml4ERootDir = "plantuml4eclipse"
 val plantUml4EParentDir = "$plantUml4ERootDir/releng/net.sourceforge.plantuml.parent"
@@ -229,6 +238,7 @@ val downloadPlantUmlLibsTask = tasks.register("downloadPlantUmlLibs") {
     group = "plantuml-lib"
 
     inputs.property("plantUmlVersion", plantUmlLibReleaseVersionSimple)
+	inputs.property("customVersion", plantUmlCustomVersion)
     outputs.dir(project.layout.buildDirectory.dir("lib"))
 
     doLast {
@@ -236,8 +246,8 @@ val downloadPlantUmlLibsTask = tasks.register("downloadPlantUmlLibs") {
         println("Using PlantUML library version: $plantUmlLibReleaseVersionSimple")
         println("#################################################################################")
 
-        downloadFile("https://github.com/plantuml/plantuml/releases/download/$plantUmlLibReleaseVersion/plantuml-epl-$plantUmlLibReleaseVersionSimple.jar", libDir)
-        downloadFile("https://github.com/plantuml/plantuml/releases/download/$plantUmlLibReleaseVersion/plantuml-epl-$plantUmlLibReleaseVersionSimple-sources.jar", libDir)
+        copyFile("${System.getenv("HOME").replace('\\', '/')}/.m2/repository/net/sourceforge/plantuml/plantuml-epl/$plantUmlLibReleaseVersionSimple-$plantUmlCustomVersion/plantuml-epl-$plantUmlLibReleaseVersionSimple-$plantUmlCustomVersion.jar", libDir, "plantuml-epl-$plantUmlLibReleaseVersionSimple.jar")
+        copyFile("${System.getenv("HOME").replace('\\', '/')}/.m2/repository/net/sourceforge/plantuml/plantuml-epl/$plantUmlLibReleaseVersionSimple-$plantUmlCustomVersion/plantuml-epl-$plantUmlLibReleaseVersionSimple-$plantUmlCustomVersion-sources.jar", libDir, "plantuml-epl-$plantUmlLibReleaseVersionSimple-sources.jar")
     }
 }
 
